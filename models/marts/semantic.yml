@@ -1,0 +1,127 @@
+version: 2
+
+models:
+  - name: fct_orders
+    columns:
+      - name: order_id
+        data_tests:
+          - not_null
+          - unique
+      - name: customer_id
+        data_tests:
+          - not_null
+      - name: campaign_id
+        data_tests:
+          - not_null
+      - name: ordered_at
+        data_tests:
+          - not_null
+
+  - name: dim_customers
+    columns:
+      - name: customer_id
+        data_tests:
+          - not_null
+          - unique
+
+  - name: dim_campaigns
+    columns:
+      - name: campaign_id
+        data_tests:
+          - not_null
+          - unique
+
+  - name: time_spine_daily
+    time_spine:
+      standard_granularity_column: date_day
+    columns:
+      - name: date_day
+        granularity: day
+
+semantic_models:
+  - name: orders
+    model: ref('fct_orders')
+    defaults:
+      agg_time_dimension: ordered_at
+
+    entities:
+      - name: order
+        type: primary
+        expr: order_id
+
+      - name: customer
+        type: foreign
+        expr: customer_id
+
+      - name: campaign
+        type: foreign
+        expr: campaign_id
+
+    dimensions:
+      - name: ordered_at
+        type: time
+        type_params:
+          time_granularity: day
+
+    measures:
+      - name: order_revenue
+        agg: sum
+        expr: order_amount_eur
+
+      - name: order_count
+        agg: count_distinct
+        expr: order_id
+
+  - name: customers
+    model: ref('dim_customers')
+
+    entities:
+      - name: customer
+        type: primary
+        expr: customer_id
+
+    dimensions:
+      - name: country
+        type: categorical
+        expr: country
+
+      - name: segment
+        type: categorical
+        expr: segment
+
+  - name: campaigns
+    model: ref('dim_campaigns')
+
+    entities:
+      - name: campaign
+        type: primary
+        expr: campaign_id
+
+    dimensions:
+      - name: channel
+        type: categorical
+        expr: channel
+
+      - name: campaign_name
+        type: categorical
+        expr: campaign_name
+
+metrics:
+  - name: total_revenue
+    label: Total Revenue
+    type: simple
+    type_params:
+      measure: order_revenue
+
+  - name: total_orders
+    label: Total Orders
+    type: simple
+    type_params:
+      measure: order_count
+
+  - name: average_order_value
+    label: Average Order Value
+    type: ratio
+    type_params:
+      numerator: total_revenue
+      denominator: total_orders
