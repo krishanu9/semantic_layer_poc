@@ -1,0 +1,6 @@
+customer_id,customer_name,country,segment
+1,Alice,NL,Consumer
+2,Bob,UK,SMB
+3,Charlie,DE,Enterprise
+4,Diana,NL,Consumer
+5,Emma,FR,SMB
